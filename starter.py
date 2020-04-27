@@ -3,27 +3,40 @@ import cv2
 import dlib
 import time
 import sys
+from imutils import face_utils
+import imutils
 
-faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 cap = cv2.VideoCapture(0)
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 while True:
     if len(sys.argv)>1:
-        img = cv2.imread(sys.argv[1])
+        image = cv2.imread(sys.argv[1])
     else:
-        ret, img = cap.read()
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = faceCascade.detectMultiScale(
-        gray,     
-        scaleFactor=1.2,
-        minNeighbors=5,     
-        minSize=(20, 20)
-    )
-    for (x,y,w,h) in faces:
-        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-        roi_gray = gray[y:y+h, x:x+w]
-        roi_color = img[y:y+h, x:x+w]  
-    cv2.imshow('faces',img)
+        ret, image = cap.read()
+    image = imutils.resize(image, width=500)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    rects = detector(gray,1)
+    for (i, rect) in enumerate(rects):
+        # determine the facial landmarks for the face region, then
+        # convert the facial landmark (x, y)-coordinates to a NumPy
+        # array
+        shape = predictor(gray, rect)
+        shape = face_utils.shape_to_np(shape)
+        # convert dlib's rectangle to a OpenCV-style bounding box
+        # [i.e., (x, y, w, h)], then draw the face bounding box
+        (x, y, w, h) = face_utils.rect_to_bb(rect)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # show the face number
+        cv2.putText(image, "Face #{}".format(i + 1), (x - 10, y - 10),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # loop over the (x, y)-coordinates for the facial landmarks
+        # and draw them on the image
+        for (x, y) in shape:
+            cv2.circle(image, (x, y), 1, (0, 0, 255), -1)
+    # show the output image with the face detections + facial landmarks
+    cv2.imshow("Output", image)
     k = cv2.waitKey(30) & 0xff
     if k == 27: # press 'ESC' to quit
         break
