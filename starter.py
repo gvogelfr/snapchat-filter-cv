@@ -28,8 +28,8 @@ def run():
             shape = face_utils.shape_to_np(shape)
 
             #left ear 
-            left_ear_image = cv2.imread("mondrian_left.png")
-            orig_mask_l = left_ear_image[:,:,2]
+            left_ear_image = cv2.imread("mondrian_left.png", -1)
+            orig_mask_l = left_ear_image[:,:,3]
             orig_mask_inv_l = cv2.bitwise_not(orig_mask_l)
             left_ear_image = left_ear_image[:,:,0:3]
             original_left_height, original_left_width = left_ear_image.shape[:2]
@@ -38,8 +38,8 @@ def run():
             shape, left_ear_image, orig_mask_l, orig_mask_inv_l, True)
 
             #right ear
-            right_ear_image = cv2.imread("mondrian_right.png")
-            orig_mask_r = right_ear_image[:,:,2]
+            right_ear_image = cv2.imread("mondrian_right.png", -1)
+            orig_mask_r = right_ear_image[:,:,3]
             orig_mask_inv_r = cv2.bitwise_not(orig_mask_r)
             right_ear_image = right_ear_image[:,:,0:3]
             original_right_height, original_right_width = right_ear_image.shape[:2]
