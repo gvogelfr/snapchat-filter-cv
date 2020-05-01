@@ -6,39 +6,88 @@ import sys
 from imutils import face_utils
 import imutils
 
-cap = cv2.VideoCapture(0)
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+def run():
+    cap = cv2.VideoCapture(0)
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
-while True:
-    if len(sys.argv)>1:
-        image = cv2.imread(sys.argv[1])
+    while True:
+        if len(sys.argv)>1:
+            image = cv2.imread(sys.argv[1])
+        else:
+            ret, image = cap.read()
+        image = imutils.resize(image, width=500)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        rects = detector(gray,1)
+        
+        for (i, rect) in enumerate(rects):
+            # determine the facial landmarks for the face region, then
+            # convert the facial landmark (x, y)-coordinates to a NumPy
+            # array
+            shape = predictor(gray, rect)
+            shape = face_utils.shape_to_np(shape)
+
+            #left ear 
+            left_ear_image = cv2.imread("mondrian_left.png")
+            orig_mask_l = left_ear_image[:,:,2]
+            orig_mask_inv_l = cv2.bitwise_not(orig_mask_l)
+            left_ear_image = left_ear_image[:,:,0:3]
+            original_left_height, original_left_width = left_ear_image.shape[:2]
+
+            place_ear(image, original_left_width, original_left_height, 
+            shape, left_ear_image, orig_mask_l, orig_mask_inv_l, True)
+
+            #right ear
+            right_ear_image = cv2.imread("mondrian_right.png")
+            orig_mask_r = right_ear_image[:,:,2]
+            orig_mask_inv_r = cv2.bitwise_not(orig_mask_r)
+            right_ear_image = right_ear_image[:,:,0:3]
+            original_right_height, original_right_width = right_ear_image.shape[:2]
+
+            place_ear(image, original_right_width, original_right_height, shape, right_ear_image, orig_mask_r, orig_mask_inv_r, False)
+        cv2.imshow("Output", image)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27: # press 'ESC' to quit
+            break
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+def place_ear(frame, ear_width, ear_height, shape, image, orig_mask, orig_mask_inv, left):  
+    width = int(abs(shape[0][0] - shape[19][1]))
+    height = int(width * ear_height / ear_width)
+    if left:
+        x1 = int(shape[0,0] - (width/2)) 
+        x2 = int(x1 + width)  
+        y1 = int(shape[0,1] -(height/2)) -70
+        y2 = int(y1 + height)
     else:
-        ret, image = cap.read()
-    image = imutils.resize(image, width=500)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    rects = detector(gray,1)
-    for (i, rect) in enumerate(rects):
-        # determine the facial landmarks for the face region, then
-        # convert the facial landmark (x, y)-coordinates to a NumPy
-        # array
-        shape = predictor(gray, rect)
-        shape = face_utils.shape_to_np(shape)
-        # convert dlib's rectangle to a OpenCV-style bounding box
-        # [i.e., (x, y, w, h)], then draw the face bounding box
-        (x, y, w, h) = face_utils.rect_to_bb(rect)
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        # show the face number
-        cv2.putText(image, "Face #{}".format(i + 1), (x - 10, y - 10),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        # loop over the (x, y)-coordinates for the facial landmarks
-        # and draw them on the image
-        for (x, y) in shape:
-            cv2.circle(image, (x, y), 1, (0, 0, 255), -1)
-    # show the output image with the face detections + facial landmarks
-    cv2.imshow("Output", image)
-    k = cv2.waitKey(30) & 0xff
-    if k == 27: # press 'ESC' to quit
-        break
-cap.release()
-cv2.destroyAllWindows()
+        x1 = int(shape[16,0] - (width/2)) 
+        x2 = int(x1 + width)  
+        y1 = int(shape[16,1] -(height/2)) -70
+        y2 = int(y1 + height)
+
+    h, w = frame.shape[:2] 
+ 
+    if x1 < 0:  
+        x1 = 0  
+    if y1 < 0:  
+        y1 = 0  
+    if x2 > w:  
+        x2 = w  
+    if y2 > h:  
+        y2 = h  
+    earOverlayWidth = x2 - x1  
+    earOverlayHeight = y2 - y1  
+
+    earOverlay = cv2.resize(image, (earOverlayWidth,earOverlayHeight), interpolation = cv2.INTER_AREA)  
+    mask = cv2.resize(orig_mask, (earOverlayWidth,earOverlayHeight), interpolation = cv2.INTER_AREA)  
+    mask_inv = cv2.resize(orig_mask_inv, (earOverlayWidth,earOverlayHeight), interpolation = cv2.INTER_AREA) 
+
+    roi = frame[y1:y2, x1:x2]  
+    roi_bg = cv2.bitwise_and(roi,roi,mask = mask_inv)  
+    roi_fg = cv2.bitwise_and(earOverlay,earOverlay,mask = mask)  
+    dst = cv2.add(roi_bg,roi_fg) 
+    frame[y1:y2, x1:x2] = dst
+
+run()
