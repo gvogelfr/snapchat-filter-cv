@@ -8,15 +8,15 @@ import imutils
 import random
 
 def run():
-    RANDOM_TIMES = 10
-    TIME_INTERVAL = 0.2
+    RANDOM_TIMES = 20
+    TIME_INTERVAL = 0.1
 
     cap = cv2.VideoCapture(0)
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
     images = [["mondrian_left.png", "mondrian_right.png"], [
-        "garfield_left.png", "garfield_right.png"],["pink.png", "pink_right.png"],
-        ["Asset_3.png", "Asset_3.png"], ["Asset_4.png", "Asset_4.png"]]
+        "garfield_left.png", "garfield_right.png"],["brownleft.png", "brownright.png"],
+        ["yellowleft.png", "yellowright.png"], ["pinkleft.png", "pinkright.png"]]
 
     start = time.clock()
 
