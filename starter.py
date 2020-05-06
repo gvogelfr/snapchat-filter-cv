@@ -14,7 +14,9 @@ def run():
     cap = cv2.VideoCapture(0)
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-    images = [["mondrian_left.png", "mondrian_right.png"], ["garfield_left.png", "garfield_right.png"]]
+    images = [["mondrian_left.png", "mondrian_right.png"], [
+        "garfield_left.png", "garfield_right.png"],["pink.png", "pink_right.png"],
+        ["Asset_3.png", "Asset_3.png"], ["Asset_4.png", "Asset_4.png"]]
 
     start = time.clock()
 
@@ -36,7 +38,6 @@ def run():
             start = time.clock()
             times += 1
             ears = random.choice(images)
-
         for (i, rect) in enumerate(rects):
             # determine the facial landmarks for the face region, then
             # convert the facial landmark (x, y)-coordinates to a NumPy
